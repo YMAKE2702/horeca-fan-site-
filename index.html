@@ -61,7 +61,18 @@
     text-transform: uppercase;
     color: var(--muted);
     font-weight: 600;
+    display: inline-block;
+    position: relative;
+    padding-left: 11px;
+    padding-top: 8px;
   }
+  .eyebrow .corner {
+    position: absolute;
+    top: 0; left: 0;
+    width: 10px; height: 10px;
+    border-top: 2px solid var(--lime); border-left: 2px solid var(--lime);
+  }
+  .eyebrow.alt .corner { border-color: var(--fuchsia); }
 
   .lime { color: var(--black); background: var(--lime); padding: 0 .12em; border-radius: 3px; }
   .fuchsia-dot {
@@ -151,20 +162,63 @@
   .chip.alert { color: var(--fuchsia); border-color: var(--fuchsia); background: rgba(230,0,122,.06); }
 
   /* ── Ticker / marquee ────────────────────────────────────── */
+  /* Градиентный фон ticker утверждён как исключение из AI Addendum §MUST NOT.
+     Правило зафиксировано в CLAUDE.md → Визуальная система сайта → Ticker. */
   .ticker {
-    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
-    background: var(--black); color: var(--white);
+    background: linear-gradient(135deg, #FFFFFF 0%, #F8F9E8 50%, #FFFFFF 100%);
+    color: var(--black);
     overflow: hidden;
-    padding: 14px 0;
+    padding: 16px 0;
+    position: relative;
+  }
+  .ticker::before,
+  .ticker::after {
+    content: "";
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 120px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .ticker::before {
+    left: 0;
+    background: linear-gradient(90deg, #FFFFFF 0%, rgba(255,255,255,0) 100%);
+  }
+  .ticker::after {
+    right: 0;
+    background: linear-gradient(270deg, #FFFFFF 0%, rgba(255,255,255,0) 100%);
   }
   .ticker-track {
     display: flex; gap: 38px; white-space: nowrap;
     animation: marquee 34s linear infinite;
     will-change: transform;
+    align-items: center;
   }
   .ticker:hover .ticker-track { animation-play-state: paused; }
-  .ticker span { font-size: 14px; font-weight: 600; letter-spacing: 0.04em; opacity: .92; }
-  .ticker span b { color: var(--lime); font-weight: 700; }
+  .ticker span { font-size: 14px; font-weight: 400; letter-spacing: 0.04em; color: #666666; }
+  .ticker-group {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 22px;
+  }
+  .ticker-group .corner {
+    display: block;
+    width: 16px; height: 16px;
+    border-top: 2px solid var(--fuchsia); border-left: 2px solid var(--fuchsia);
+    flex: 0 0 auto;
+    margin-right: -31px;
+  }
+  .ticker-group.alt .corner {
+    border-top-color: var(--lime); border-left-color: var(--lime);
+  }
+  .ticker-group span { display: inline-block; }
+  .ticker-group span b {
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .ticker-group .c1 b { color: var(--black); }
+  .ticker-group .c2 b { color: var(--fuchsia); }
+  .ticker-group .c3 b { color: var(--lime); }
   @keyframes marquee { from{ transform: translateX(0);} to{ transform: translateX(-50%);} }
 
   /* ── Sections ────────────────────────────────────────────── */
@@ -320,7 +374,7 @@
 <section class="hero">
   <div class="wrap hero-grid">
     <div class="reveal">
-      <p class="eyebrow">Автоматизация для HoReCa · команда внедрения</p>
+      <p class="eyebrow"><span class="corner"></span>Автоматизация для HoReCa · команда внедрения</p>
       <h1>Управляйте рестораном в моменте, а не после финансового отчёта</h1>
       <p class="lead">
         HORECA FAN — это приборная панель и регламент ТО вашего бизнеса.
@@ -375,18 +429,30 @@
 <!-- ───────────── TICKER ───────────── -->
 <div class="ticker" aria-hidden="true">
   <div class="ticker-track">
-    <span><b>HR</b> · подбор эффективнее в 3–4×</span>
-    <span><b>Операции</b> · адаптация ×2</span>
-    <span><b>Закупки</b> · накладные сутки → 15 мин</span>
-    <span><b>Финансы</b> · бухгалтерия ~в 3 раза легче</span>
-    <span><b>ХАССП</b> · нет приостановки до 90 суток</span>
-    <span><b>Качество</b> · перехват негатива до публикации</span>
-    <span><b>HR</b> · подбор эффективнее в 3–4×</span>
-    <span><b>Операции</b> · адаптация ×2</span>
-    <span><b>Закупки</b> · накладные сутки → 15 мин</span>
-    <span><b>Финансы</b> · бухгалтерия ~в 3 раза легче</span>
-    <span><b>ХАССП</b> · нет приостановки до 90 суток</span>
-    <span><b>Качество</b> · перехват негатива до публикации</span>
+    <div class="ticker-group">
+      <span class="corner"></span>
+      <span class="c1"><b>HR</b> · подбор эффективнее в 3–4×</span>
+      <span class="c2"><b>Операции</b> · адаптация ×2</span>
+      <span class="c3"><b>Закупки</b> · накладные сутки → 15 мин</span>
+    </div>
+    <div class="ticker-group alt">
+      <span class="corner"></span>
+      <span class="c1"><b>Финансы</b> · бухгалтерия ~в 3 раза легче</span>
+      <span class="c2"><b>ХАССП</b> · нет приостановки до 90 суток</span>
+      <span class="c3"><b>Качество</b> · перехват негатива до публикации</span>
+    </div>
+    <div class="ticker-group">
+      <span class="corner"></span>
+      <span class="c1"><b>HR</b> · подбор эффективнее в 3–4×</span>
+      <span class="c2"><b>Операции</b> · адаптация ×2</span>
+      <span class="c3"><b>Закупки</b> · накладные сутки → 15 мин</span>
+    </div>
+    <div class="ticker-group alt">
+      <span class="corner"></span>
+      <span class="c1"><b>Финансы</b> · бухгалтерия ~в 3 раза легче</span>
+      <span class="c2"><b>ХАССП</b> · нет приостановки до 90 суток</span>
+      <span class="c3"><b>Качество</b> · перехват негатива до публикации</span>
+    </div>
   </div>
 </div>
 
@@ -394,7 +460,7 @@
 <section id="about">
   <div class="wrap">
     <div class="section-head reveal">
-      <p class="eyebrow">Что такое HORECA FAN</p>
+      <p class="eyebrow"><span class="corner"></span>Что такое HORECA FAN</p>
       <h2>Не отдельная программа, а комплекс</h2>
       <p>HORECA FAN — это не «коробка». Программное обеспечение — лишь один из инструментов реализации. Основу продукта составляет методология управления бизнесом через процессы, роли и показатели.</p>
     </div>
@@ -432,7 +498,7 @@
 <section id="process" style="background: var(--bg-soft); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
   <div class="wrap">
     <div class="section-head reveal">
-      <p class="eyebrow">Как мы работаем</p>
+      <p class="eyebrow"><span class="corner"></span>Как мы работаем</p>
       <h2>Два взаимодополняющих контура</h2>
       <p>Первый — для тех, у кого ещё нет оцифровки: наводим порядок. Второй — закрепляет этот порядок в формах и маршрутах Pyrus.</p>
     </div>
@@ -470,7 +536,7 @@
   <div class="wrap">
     <div class="carousel-head">
       <div class="section-head reveal" style="margin:0">
-        <p class="eyebrow">Решения</p>
+        <p class="eyebrow"><span class="corner"></span>Решения</p>
         <h2>12 направлений автоматизации</h2>
         <p>Каждое направление — отдельный блок, закрывающий конкретный финансовый риск отрасли.</p>
       </div>
@@ -561,7 +627,7 @@
 <section id="results" style="background: var(--bg-soft); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
   <div class="wrap">
     <div class="section-head reveal">
-      <p class="eyebrow">Эффекты</p>
+      <p class="eyebrow"><span class="corner"></span>Эффекты</p>
       <h2>Измеримые результаты по направлениям</h2>
       <p>Переход из режима «анализ последствий» в режим «предотвращения последствий» подтверждается цифрами.</p>
     </div>
@@ -598,7 +664,7 @@
 <section class="cta-block" id="approach">
   <div class="wrap">
     <div class="cta-card reveal">
-      <p class="eyebrow">О подходе</p>
+      <p class="eyebrow"><span class="corner"></span>О подходе</p>
       <h2>Сначала диагностика. Потом — поэтапно, по доказанному эффекту.</h2>
       <p>Мы заходим ставками: сначала этап с быстрым измеримым возвратом, и только по доказанному результату — расширение. Риск каждого шага ограничен. Если по итогам диагностики внедрение не даст эффекта — мы честно об этом скажем ещё до начала.</p>
       <div class="hero-cta">
@@ -612,6 +678,10 @@
 <!-- ───────────── FOOTER ───────────── -->
 <footer class="site-footer" id="contacts">
   <div class="wrap">
+    <div class="section-head" style="margin-bottom:40px">
+      <p class="eyebrow"><span class="corner"></span>Контакты</p>
+      <h2>Обсудим, как HORECA FAN снизит скрытые потери в вашей компании</h2>
+    </div>
     <div class="foot-grid">
       <div class="foot-brand">
         <a class="brand" href="#">
