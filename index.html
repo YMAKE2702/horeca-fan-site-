@@ -28,6 +28,10 @@
     --maxw: 1200px;
     --radius: 14px;
     --radius-lg: 20px;
+    --status-open: var(--black);
+    --status-overdue: var(--fuchsia);
+    --status-sla: var(--lime);
+    --status-done: var(--muted);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -127,12 +131,12 @@
   .hero-cta { display: flex; gap: 14px; margin-top: 34px; flex-wrap: wrap; }
   .hero-trust { margin-top: 26px; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 10px; }
 
-  /* floating dashboard-card (Raycast-паттерн → метафора приборной панели) */
+  /* floating dashboard-card (Pyrus summary + vertical task carousel) */
   .dash {
     background: var(--white);
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
-    padding: 22px 22px 16px;
+    padding: 22px 22px 18px;
     box-shadow: 0 1px 0 var(--line);
     position: relative;
   }
@@ -142,23 +146,98 @@
     width: 16px; height: 16px;
     border-top: 2px solid var(--lime); border-left: 2px solid var(--lime);
   }
-  .dash-head { display: flex; justify-content: space-between; align-items: center; padding-left: 26px; margin-bottom: 18px; }
+  .dash-head { display: flex; justify-content: space-between; align-items: center; padding-left: 26px; margin-bottom: 14px; }
   .dash-title { font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
   .dash-status { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 7px; }
   .dash-pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--lime); animation: pulse 2s ease-in-out infinite; }
   @keyframes pulse { 0%,100%{ opacity:1; transform: scale(1);} 50%{ opacity:.45; transform: scale(.8);} }
 
-  .dash-row {
-    display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px;
-    padding: 13px 0;
-    border-top: 1px solid var(--line);
-    font-size: 14px;
+  /* summary tiles — Pyrus-style */
+  .dash-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
   }
-  .dash-row .label { font-weight: 500; }
-  .dash-row .val { font-variant-numeric: tabular-nums; font-weight: 700; }
-  .dash-row .chip { font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
-  .chip.ok { color: var(--black); border-color: var(--lime); background: rgba(206,220,48,.14); }
-  .chip.alert { color: var(--fuchsia); border-color: var(--fuchsia); background: rgba(230,0,122,.06); }
+  .dash-tile {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 12px;
+    position: relative;
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  }
+  .dash-tile::before {
+    content: "";
+    position: absolute; left: 0; top: 10px; bottom: 10px;
+    width: 3px; border-radius: 0 2px 2px 0;
+    background: var(--line);
+  }
+  .dash-tile.open::before { background: var(--status-open); }
+  .dash-tile.overdue::before { background: var(--status-overdue); }
+  .dash-tile.sla::before { background: var(--status-sla); }
+  .dash-tile.done::before { background: var(--status-done); }
+  .dash-tile.active { border-color: currentColor; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.06); }
+  .dash-tile.open.active { border-color: var(--status-open); }
+  .dash-tile.overdue.active { border-color: var(--status-overdue); }
+  .dash-tile.sla.active { border-color: var(--status-sla); }
+  .dash-tile.done.active { border-color: var(--status-done); }
+
+  .dash-tile .sym {
+    width: 18px; height: 18px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; margin-bottom: 6px;
+    border: 1.5px solid var(--line); color: var(--muted);
+  }
+  .dash-tile.open .sym { color: var(--status-open); border-color: var(--status-open); background: rgba(10,10,10,.08); }
+  .dash-tile.overdue .sym { color: var(--status-overdue); border-color: var(--status-overdue); background: rgba(230,0,122,.08); }
+  .dash-tile.sla .sym { color: var(--status-sla); border-color: var(--status-sla); background: rgba(206,220,48,.14); }
+  .dash-tile.done .sym { color: var(--status-done); border-color: var(--status-done); background: rgba(107,107,107,.08); }
+
+  .dash-tile .num { font-family: 'Montserrat', sans-serif; font-size: 22px; font-weight: 800; line-height: 1; }
+  .dash-tile .lbl { font-size: 10px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  @media (max-width: 960px) {
+    .dash-summary { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .dash-summary { grid-template-columns: 1fr; }
+  }
+
+  /* vertical task carousel */
+  .dash-carousel {
+    position: relative;
+    height: 130px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--bg-soft);
+  }
+  .dash-carousel-track {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    transition: transform .5s cubic-bezier(.25,.1,.25,1);
+  }
+  .dash-task {
+    height: 130px;
+    padding: 16px 18px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .dash-task-top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  .dash-task-name { font-weight: 700; font-size: 15px; }
+  .dash-task-chip { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+  .dash-task-chip.ok { color: var(--black); border-color: var(--lime); background: rgba(206,220,48,.14); }
+  .dash-task-chip.alert { color: var(--status-overdue); border-color: var(--status-overdue); background: rgba(230,0,122,.06); }
+  .dash-task-mid {
+    display: flex; align-items: baseline; gap: 8px;
+  }
+  .dash-task-val { font-family: 'Montserrat', sans-serif; font-size: 28px; font-weight: 800; line-height: 1; }
+  .dash-task-note { font-size: 13px; color: var(--muted); line-height: 1.4; }
 
   /* ── Ticker / marquee ────────────────────────────────────── */
   /* Градиентный фон ticker утверждён как исключение из AI Addendum §MUST NOT.
@@ -390,36 +469,89 @@
       </p>
     </div>
 
-    <!-- floating dashboard-card: метафора приборной панели ресторана -->
+    <!-- floating dashboard-card: сводка Pyrus + вертикальная карусель задач -->
     <div class="dash reveal">
       <div class="dash-head">
         <span class="dash-title">Приборная панель · сегодня</span>
         <span class="dash-status"><span class="dash-pulse"></span>контроль в моменте</span>
       </div>
-      <div class="dash-row">
-        <span class="label">Фудкост</span>
-        <span class="val">27,4%</span>
-        <span class="chip ok">в норме</span>
+
+      <div class="dash-summary" id="dashSummary">
+        <div class="dash-tile open" data-index="0">
+          <div class="sym">○</div>
+          <div class="num">12</div>
+          <div class="lbl">Открыто</div>
+        </div>
+        <div class="dash-tile overdue" data-index="1">
+          <div class="sym">⚠</div>
+          <div class="num">3</div>
+          <div class="lbl">Просрочено</div>
+        </div>
+        <div class="dash-tile sla" data-index="2">
+          <div class="sym">!</div>
+          <div class="num">1</div>
+          <div class="lbl">SLA 2ч</div>
+        </div>
+        <div class="dash-tile done" data-index="3">
+          <div class="sym">✓</div>
+          <div class="num">7</div>
+          <div class="lbl">Завершено</div>
+        </div>
       </div>
-      <div class="dash-row">
-        <span class="label">Накладные · обработка</span>
-        <span class="val">15 мин</span>
-        <span class="chip ok">SLA</span>
-      </div>
-      <div class="dash-row">
-        <span class="label">Новый отзыв (негатив)</span>
-        <span class="val">1</span>
-        <span class="chip alert">задача · SLA 2ч</span>
-      </div>
-      <div class="dash-row">
-        <span class="label">Договор аренды · истекает</span>
-        <span class="val">14 дн.</span>
-        <span class="chip alert">продлить</span>
-      </div>
-      <div class="dash-row">
-        <span class="label">ХАССП · журналы</span>
-        <span class="val">100%</span>
-        <span class="chip ok">подписаны</span>
+
+      <div class="dash-carousel" id="dashCarousel">
+        <div class="dash-carousel-track" id="dashCarouselTrack">
+          <div class="dash-task">
+            <div class="dash-task-top">
+              <span class="dash-task-name">Фудкост</span>
+              <span class="dash-task-chip ok">в норме</span>
+            </div>
+            <div class="dash-task-mid">
+              <span class="dash-task-val">27,4%</span>
+            </div>
+            <div class="dash-task-note">Плановый показатель. Контроль в моменте, без отклонений.</div>
+          </div>
+          <div class="dash-task">
+            <div class="dash-task-top">
+              <span class="dash-task-name">Накладные · обработка</span>
+              <span class="dash-task-chip ok">SLA</span>
+            </div>
+            <div class="dash-task-mid">
+              <span class="dash-task-val">15 мин</span>
+            </div>
+            <div class="dash-task-note">ИИ-распознавание накладных. Было ~1 сутки, теперь 15 мин.</div>
+          </div>
+          <div class="dash-task">
+            <div class="dash-task-top">
+              <span class="dash-task-name">Новый отзыв (негатив)</span>
+              <span class="dash-task-chip alert">SLA 2ч</span>
+            </div>
+            <div class="dash-task-mid">
+              <span class="dash-task-val">1</span>
+            </div>
+            <div class="dash-task-note">Перехват негатива до публикации. Автоматически стала задачей.</div>
+          </div>
+          <div class="dash-task">
+            <div class="dash-task-top">
+              <span class="dash-task-name">Договор аренды · истекает</span>
+              <span class="dash-task-chip alert">продлить</span>
+            </div>
+            <div class="dash-task-mid">
+              <span class="dash-task-val">14 дн.</span>
+            </div>
+            <div class="dash-task-note">Срок договора под контролем. Уведомление за 2 недели.</div>
+          </div>
+          <div class="dash-task">
+            <div class="dash-task-top">
+              <span class="dash-task-name">ХАССП · журналы</span>
+              <span class="dash-task-chip ok">подписаны</span>
+            </div>
+            <div class="dash-task-mid">
+              <span class="dash-task-val">100%</span>
+            </div>
+            <div class="dash-task-note">Все журналы на сегодня заполнены и подписаны через Госключ.</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -761,6 +893,48 @@
       entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
     }, { threshold: 0.12 });
     document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+  })();
+
+  // dashboard summary tiles state cycle
+  (function () {
+    var summary = document.getElementById('dashSummary');
+    if (!summary) return;
+    var states = [
+      { open: '12', overdue: '3', sla: '1', done: '7' },
+      { open: '13', overdue: '2', sla: '0', done: '8' },
+      { open: '11', overdue: '4', sla: '2', done: '6' },
+      { open: '12', overdue: '3', sla: '1', done: '7' }
+    ];
+    var idx = 0;
+    function apply() {
+      var s = states[idx];
+      var tiles = summary.querySelectorAll('.dash-tile');
+      tiles.forEach(function (t) {
+        var key = t.classList.contains('open') ? 'open'
+                : t.classList.contains('overdue') ? 'overdue'
+                : t.classList.contains('sla') ? 'sla'
+                : 'done';
+        var n = t.querySelector('.num');
+        if (n) n.textContent = s[key];
+      });
+      idx = (idx + 1) % states.length;
+    }
+    setInterval(apply, 4200);
+  })();
+
+  // dashboard vertical task carousel
+  (function () {
+    var carousel = document.getElementById('dashCarousel');
+    var track = document.getElementById('dashCarouselTrack');
+    if (!carousel || !track) return;
+    var items = track.children;
+    if (!items.length) return;
+    var current = 0;
+    function tick() {
+      current = (current + 1) % items.length;
+      track.style.transform = 'translateY(-' + (current * items[0].offsetHeight) + 'px)';
+    }
+    setInterval(tick, 3600);
   })();
 </script>
 
