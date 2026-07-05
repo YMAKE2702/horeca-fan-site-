@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HORECA FAN — приборная панель и регламент ТО вашего ресторана</title>
+<meta name="description" content="HORECA FAN — команда внедрения автоматизации для HoReCa. Превращаем процессы в измеримые и управляемые, чтобы управленческие решения принимались в момент проблемы, а не после финансового отчёта." />
+<link rel="icon" type="image/png" href="assets/horeca-fan-logo-placeholder.png" />
+<!--
+  Прототип главной страницы.
+  Источники контента: CONTEXT.md, docs/horecafan-produkt-polnoe-opisanie.txt (§3, §4, §7),
+  docs/horeca-fan-ai-addendum-v1.0.md, reports/horeca-fan-ia-2026-07-05.md, docs/horeca-fan-references-2026-07-05.md.
+  Структура: IA §4 (Hero → Что такое HF → Два контура → 12 направлений → Эффекты → CTA).
+  Визуальные паттерны: разбор референсов (Raycast floating dashboard-card, hairline, карусель; Motion лайм-акцент, ticker).
+  ⚠ Плейсхолдеры: CTA «Запросить демо» и контакты — ждут подтверждения от заказчика (IA §6).
+  ⚠ Логотип: placeholder PNG, замена утверждённым оригиналом перед запуском.
+-->
+<style>
+  :root {
+    --black: #0A0A0A;
+    --white: #FFFFFF;
+    --lime: #CEDC30;
+    --fuchsia: #E6007A;
+    --line: #E0E0E0;
+    --bg: #FFFFFF;
+    --bg-soft: #F6F6F4;
+    --muted: #6B6B6B;
+    --maxw: 1200px;
+    --radius: 14px;
+    --radius-lg: 20px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', 'Manrope', 'Montserrat', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    color: var(--black);
+    background: var(--bg);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, .logo-text {
+    font-family: 'Montserrat', 'Inter', 'Manrope', system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  img { display: block; max-width: 100%; }
+
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+  .eyebrow {
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .lime { color: var(--black); background: var(--lime); padding: 0 .12em; border-radius: 3px; }
+  .fuchsia-dot {
+    display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--fuchsia);
+  }
+
+  /* ── Header ─────────────────────────────────────────────── */
+  .site-header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255,255,255,0.92);
+    border-bottom: 1px solid var(--line);
+  }
+  .site-header .wrap {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand img { height: 34px; width: auto; }
+
+  .nav { display: flex; gap: 28px; }
+  .nav a { font-size: 14px; font-weight: 500; color: var(--black); opacity: .82; transition: opacity .15s; }
+  .nav a:hover { opacity: 1; }
+
+  .header-cta { display: flex; align-items: center; gap: 12px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: inherit;
+    font-size: 14px; font-weight: 600;
+    padding: 11px 20px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: transform .15s ease, background .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .btn-primary { background: var(--black); color: var(--white); }
+  .btn-primary:hover { background: var(--lime); color: var(--black); transform: translateY(-2px); }
+  .btn-ghost { background: transparent; color: var(--black); border-color: var(--line); }
+  .btn-ghost:hover { border-color: var(--lime); transform: translateY(-2px); }
+  .btn-lg { padding: 15px 28px; font-size: 15px; }
+
+  .burger { display: none; background: none; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; cursor: pointer; }
+  .burger span { display: block; width: 20px; height: 2px; background: var(--black); margin: 4px 0; }
+
+  /* ── Hero ────────────────────────────────────────────────── */
+  .hero { padding: 72px 0 56px; }
+  .hero-grid {
+    display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center;
+  }
+  .hero h1 { font-size: clamp(34px, 5vw, 56px); margin: 22px 0 22px; }
+  .hero .lead { font-size: 19px; color: #333; max-width: 540px; }
+  .hero-cta { display: flex; gap: 14px; margin-top: 34px; flex-wrap: wrap; }
+  .hero-trust { margin-top: 26px; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 10px; }
+
+  /* floating dashboard-card (Raycast-паттерн → метафора приборной панели) */
+  .dash {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 22px 22px 16px;
+    box-shadow: 0 1px 0 var(--line);
+    position: relative;
+  }
+  .dash::before {
+    /* системный лаймовый уголок ┌ */
+    content: ""; position: absolute; top: 14px; left: 14px;
+    width: 16px; height: 16px;
+    border-top: 2px solid var(--lime); border-left: 2px solid var(--lime);
+  }
+  .dash-head { display: flex; justify-content: space-between; align-items: center; padding-left: 26px; margin-bottom: 18px; }
+  .dash-title { font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+  .dash-status { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 7px; }
+  .dash-pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--lime); animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{ opacity:1; transform: scale(1);} 50%{ opacity:.45; transform: scale(.8);} }
+
+  .dash-row {
+    display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px;
+    padding: 13px 0;
+    border-top: 1px solid var(--line);
+    font-size: 14px;
+  }
+  .dash-row .label { font-weight: 500; }
+  .dash-row .val { font-variant-numeric: tabular-nums; font-weight: 700; }
+  .dash-row .chip { font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .chip.ok { color: var(--black); border-color: var(--lime); background: rgba(206,220,48,.14); }
+  .chip.alert { color: var(--fuchsia); border-color: var(--fuchsia); background: rgba(230,0,122,.06); }
+
+  /* ── Ticker / marquee ────────────────────────────────────── */
+  .ticker {
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    background: var(--black); color: var(--white);
+    overflow: hidden;
+    padding: 14px 0;
+  }
+  .ticker-track {
+    display: flex; gap: 38px; white-space: nowrap;
+    animation: marquee 34s linear infinite;
+    will-change: transform;
+  }
+  .ticker:hover .ticker-track { animation-play-state: paused; }
+  .ticker span { font-size: 14px; font-weight: 600; letter-spacing: 0.04em; opacity: .92; }
+  .ticker span b { color: var(--lime); font-weight: 700; }
+  @keyframes marquee { from{ transform: translateX(0);} to{ transform: translateX(-50%);} }
+
+  /* ── Sections ────────────────────────────────────────────── */
+  section { padding: 88px 0; }
+  .section-head { max-width: 760px; margin-bottom: 52px; }
+  .section-head h2 { font-size: clamp(28px, 3.6vw, 40px); margin: 16px 0 18px; }
+  .section-head p { font-size: 17px; color: #444; }
+
+  /* комплекс — 5 составляющих */
+  .complex { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+  .complex-item { border: 1px solid var(--line); border-radius: var(--radius); padding: 24px 20px; position: relative; background: var(--white); transition: transform .18s ease, border-color .18s ease; }
+  .complex-item::before { content:""; position:absolute; top:12px; left:12px; width:14px; height:14px; border-top:2px solid var(--lime); border-left:2px solid var(--lime); }
+  .complex-item:hover { transform: translateY(-4px); border-color: var(--lime); }
+  .complex-item .num { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 10px; padding-left: 22px; }
+  .complex-item h3 { font-size: 16px; margin-bottom: 8px; padding-left: 22px; }
+  .complex-item p { font-size: 13px; color: #555; padding-left: 22px; }
+
+  /* два контура */
+  .contours { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .contour { border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 32px; position: relative; background: var(--white); transition: border-color .18s ease, transform .18s ease; }
+  .contour:hover { border-color: var(--lime); transform: translateY(-4px); }
+  .contour .tag { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--black); background: var(--lime); padding: 5px 11px; border-radius: 999px; margin-bottom: 18px; }
+  .contour.alt .tag { background: var(--fuchsia); color: var(--white); }
+  .contour h3 { font-size: 22px; margin-bottom: 12px; }
+  .contour p { color: #444; font-size: 15px; margin-bottom: 18px; }
+  .contour ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .contour li { font-size: 14px; color: #333; padding-left: 22px; position: relative; }
+  .contour li::before { content:""; position:absolute; left:0; top:8px; width:8px; height:8px; background: var(--lime); }
+  .contour.alt li::before { background: var(--fuchsia); }
+  .contour .note { margin-top: 18px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; }
+
+  /* карусель 12 направлений */
+  .carousel-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 28px; }
+  .carousel-head .section-head { margin-bottom: 0; }
+  .carousel-controls { display: flex; gap: 10px; }
+  .car-btn { width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--line); background: var(--white); cursor: pointer; font-size: 18px; color: var(--black); transition: border-color .15s, transform .15s; }
+  .car-btn:hover { border-color: var(--lime); transform: translateY(-2px); }
+  .car-btn:disabled { opacity: .35; cursor: default; transform: none; }
+
+  .carousel {
+    display: grid; grid-auto-flow: column; grid-auto-columns: 290px;
+    gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory;
+    padding: 6px 24px 22px 0; margin: 0 -24px; scrollbar-width: thin;
+  }
+  .carousel::-webkit-scrollbar { height: 6px; }
+  .carousel::-webkit-scrollbar-thumb { background: var(--line); border-radius: 999px; }
+
+  .dir-card {
+    scroll-snap-align: start;
+    border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 24px 20px; min-height: 220px;
+    display: flex; flex-direction: column; gap: 12px;
+    position: relative; background: var(--white);
+    transition: transform .18s ease, border-color .18s ease;
+  }
+  .dir-card::before { content:""; position:absolute; top:14px; left:14px; width:16px; height:16px; border-top:2px solid var(--lime); border-left:2px solid var(--lime); }
+  .dir-card:hover { transform: translateY(-4px); border-color: var(--lime); }
+  .dir-card .icon { width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-left: auto; font-weight: 800; color: var(--muted); }
+  .dir-card h3 { font-size: 17px; padding-left: 22px; }
+  .dir-card p { font-size: 13px; color: #555; }
+  .dir-card .effect { margin-top: auto; font-size: 12px; font-weight: 600; color: var(--black); border-top: 1px solid var(--line); padding-top: 12px; }
+  .dir-card .effect b { color: var(--fuchsia); }
+
+  /* эффекты — stat tiles */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .stat { border: 1px solid var(--line); border-radius: var(--radius); padding: 28px 24px; position: relative; transition: border-color .18s, transform .18s; }
+  .stat:hover { border-color: var(--lime); transform: translateY(-4px); }
+  .stat .big { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: clamp(30px, 3.4vw, 44px); letter-spacing: -0.02em; line-height: 1; }
+  .stat .big b { color: var(--fuchsia); }
+  .stat .lbl { margin-top: 14px; font-size: 14px; font-weight: 600; }
+  .stat .src { margin-top: 6px; font-size: 12px; color: var(--muted); }
+  .disclaimer { margin-top: 24px; font-size: 13px; color: var(--muted); border-left: 2px solid var(--line); padding-left: 14px; }
+
+  /* CTA-блок */
+  .cta-block { padding: 0 0 96px; }
+  .cta-card {
+    border: 1px solid var(--black); border-radius: var(--radius-lg);
+    padding: 56px 48px; background: var(--white); position: relative; overflow: hidden;
+  }
+  .cta-card::before { content:""; position:absolute; top:18px; left:18px; width:22px; height:22px; border-top:3px solid var(--lime); border-left:3px solid var(--lime); }
+  .cta-card h2 { font-size: clamp(28px, 3.6vw, 42px); margin: 10px 0 16px; padding-left: 34px; }
+  .cta-card p { font-size: 17px; color: #444; max-width: 620px; padding-left: 34px; }
+  .cta-card .hero-cta { padding-left: 34px; }
+
+  /* footer */
+  .site-footer { border-top: 1px solid var(--line); background: var(--bg-soft); padding: 56px 0 28px; }
+  .foot-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 32px; }
+  .foot-brand .brand { margin-bottom: 14px; }
+  .foot-brand p { font-size: 13px; color: #555; max-width: 280px; }
+  .foot-col h4 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; font-weight: 700; }
+  .foot-col ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+  .foot-col a { font-size: 14px; color: #333; }
+  .foot-col a:hover { color: var(--black); }
+  .foot-bottom { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 16px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+  .foot-bottom .warn { color: var(--fuchsia); }
+
+  /* scroll-reveal */
+  .reveal { opacity: 0; transform: translateY(16px); transition: opacity .5s ease, transform .5s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* responsive */
+  @media (max-width: 960px) {
+    .nav, .header-cta .btn-ghost { display: none; }
+    .burger { display: inline-flex; }
+    .hero-grid { grid-template-columns: 1fr; gap: 36px; }
+    .complex { grid-template-columns: repeat(2, 1fr); }
+    .contours { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .foot-grid { grid-template-columns: 1fr 1fr; }
+    .nav.open {
+      display: flex; flex-direction: column; gap: 14px;
+      position: absolute; top: 64px; left: 0; right: 0;
+      background: var(--white); border-bottom: 1px solid var(--line);
+      padding: 20px 24px;
+    }
+  }
+  @media (max-width: 560px) {
+    .complex { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: 1fr; }
+    .foot-grid { grid-template-columns: 1fr; }
+    .carousel { grid-auto-columns: 84vw; }
+    .cta-card { padding: 36px 24px; }
+    .cta-card h2, .cta-card p, .cta-card .hero-cta { padding-left: 0; }
+    .cta-card::before { top: 14px; left: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ───────────── HEADER ───────────── -->
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="#" aria-label="HORECA FAN">
+      <img src="assets/horeca-fan-logo-placeholder.png" alt="HORECA FAN" />
+    </a>
+    <nav class="nav" id="nav">
+      <a href="problems.html" title="отдельная страница (IA)">Проблемы</a>
+      <a href="#approach">Подход</a>
+      <a href="#solutions">Решения</a>
+      <a href="#process">Как работаем</a>
+      <a href="#results">Эффекты</a>
+      <a href="#contacts">Контакты</a>
+    </nav>
+    <div class="header-cta">
+      <a class="btn btn-ghost" href="#approach">О подходе</a>
+      <a class="btn btn-primary" href="#contacts" title="⚠ плейсхолдер — механизм заявки уточняется">Запросить демо</a>
+      <button class="burger" id="burger" aria-label="Меню"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<!-- ───────────── HERO ───────────── -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="reveal">
+      <p class="eyebrow">Автоматизация для HoReCa · команда внедрения</p>
+      <h1>Управляйте рестораном в моменте, а не после финансового отчёта</h1>
+      <p class="lead">
+        HORECA FAN — это приборная панель и регламент ТО вашего бизнеса.
+        Мы делаем процессы измеримыми, отклонения — задачами, а ответственность — закреплённой,
+        чтобы решения принимались до того, как проблема станет <span class="lime">финансовой потерей</span>.
+      </p>
+      <div class="hero-cta">
+        <a class="btn btn-primary btn-lg" href="#contacts" title="⚠ плейсхолдер">Запросить демо →</a>
+        <a class="btn btn-ghost btn-lg" href="#solutions">Смотреть решения</a>
+      </div>
+      <p class="hero-trust">
+        <span class="fuchsia-dot"></span>
+        7 лет внедрения BPM-платформы Pyrus в сетевом ресторанном бизнесе
+      </p>
+    </div>
+
+    <!-- floating dashboard-card: метафора приборной панели ресторана -->
+    <div class="dash reveal">
+      <div class="dash-head">
+        <span class="dash-title">Приборная панель · сегодня</span>
+        <span class="dash-status"><span class="dash-pulse"></span>контроль в моменте</span>
+      </div>
+      <div class="dash-row">
+        <span class="label">Фудкост</span>
+        <span class="val">27,4%</span>
+        <span class="chip ok">в норме</span>
+      </div>
+      <div class="dash-row">
+        <span class="label">Накладные · обработка</span>
+        <span class="val">15 мин</span>
+        <span class="chip ok">SLA</span>
+      </div>
+      <div class="dash-row">
+        <span class="label">Новый отзыв (негатив)</span>
+        <span class="val">1</span>
+        <span class="chip alert">задача · SLA 2ч</span>
+      </div>
+      <div class="dash-row">
+        <span class="label">Договор аренды · истекает</span>
+        <span class="val">14 дн.</span>
+        <span class="chip alert">продлить</span>
+      </div>
+      <div class="dash-row">
+        <span class="label">ХАССП · журналы</span>
+        <span class="val">100%</span>
+        <span class="chip ok">подписаны</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────── TICKER ───────────── -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track">
+    <span><b>HR</b> · подбор эффективнее в 3–4×</span>
+    <span><b>Операции</b> · адаптация ×2</span>
+    <span><b>Закупки</b> · накладные сутки → 15 мин</span>
+    <span><b>Финансы</b> · бухгалтерия ~в 3 раза легче</span>
+    <span><b>ХАССП</b> · нет приостановки до 90 суток</span>
+    <span><b>Качество</b> · перехват негатива до публикации</span>
+    <span><b>HR</b> · подбор эффективнее в 3–4×</span>
+    <span><b>Операции</b> · адаптация ×2</span>
+    <span><b>Закупки</b> · накладные сутки → 15 мин</span>
+    <span><b>Финансы</b> · бухгалтерия ~в 3 раза легче</span>
+    <span><b>ХАССП</b> · нет приостановки до 90 суток</span>
+    <span><b>Качество</b> · перехват негатива до публикации</span>
+  </div>
+</div>
+
+<!-- ───────────── ЧТО ТАКОЕ HORECA FAN ───────────── -->
+<section id="about">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Что такое HORECA FAN</p>
+      <h2>Не отдельная программа, а комплекс</h2>
+      <p>HORECA FAN — это не «коробка». Программное обеспечение — лишь один из инструментов реализации. Основу продукта составляет методология управления бизнесом через процессы, роли и показатели.</p>
+    </div>
+    <div class="complex reveal">
+      <div class="complex-item">
+        <div class="num">01</div>
+        <h3>Методология</h3>
+        <p>Управление через процессы, роли, показатели и автоматизацию.</p>
+      </div>
+      <div class="complex-item">
+        <div class="num">02</div>
+        <h3>Диагностика</h3>
+        <p>Аудит подразделений, выявление узких мест и скрытых потерь.</p>
+      </div>
+      <div class="complex-item">
+        <div class="num">03</div>
+        <h3>Внедрение процессов</h3>
+        <p>Пересборка отделов, роли, границы ответственности, измеримый результат.</p>
+      </div>
+      <div class="complex-item">
+        <div class="num">04</div>
+        <h3>Автоматизация на Pyrus</h3>
+        <p>Формы, маршруты, контроль сроков, цифровой след процессов.</p>
+      </div>
+      <div class="complex-item">
+        <div class="num">05</div>
+        <h3>Сопровождение</h3>
+        <p>Развитие по доказанному эффекту, поддержка работоспособности.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────── ДВА КОНТУРА ───────────── -->
+<section id="process" style="background: var(--bg-soft); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Как мы работаем</p>
+      <h2>Два взаимодополняющих контура</h2>
+      <p>Первый — для тех, у кого ещё нет оцифровки: наводим порядок. Второй — закрепляет этот порядок в формах и маршрутах Pyrus.</p>
+    </div>
+    <div class="contours">
+      <div class="contour reveal">
+        <span class="tag">Контур 1</span>
+        <h3>Диагностика и пересборка компании</h3>
+        <p>Не требует Pyrus. Для тех, у кого есть процессы, но нет контроля и оцифрованности.</p>
+        <ul>
+          <li>Чек-лист предприятия по отделам: бюджет, люди, маркетинг, процессы</li>
+          <li>Вектор развития под запросы собственника</li>
+          <li>Пересборка отделов и распределение ответственности</li>
+          <li>Единое ядро компании: роли, инструкции, дашборды</li>
+        </ul>
+        <p class="note">Результат — прозрачная структура, описанные процессы, оцифрованные финансовые метрики.</p>
+      </div>
+      <div class="contour alt reveal">
+        <span class="tag">Контур 2</span>
+        <h3>Оцифровка и управление в Pyrus</h3>
+        <p>Перевод наведённого порядка в действие — готовые формы и автоматизации.</p>
+        <ul>
+          <li>Свыше 40 форм и решений по направлениям</li>
+          <li>Маршруты, SLA, контроль сроков исполнения</li>
+          <li>Цифровой след каждого процесса</li>
+          <li>Сопровождение и развитие по доказанному эффекту</li>
+        </ul>
+        <p class="note">Каждый блок закрывает конкретный финансовый риск: фудкост, сроки, рейтинг, ХАССП.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────── 12 НАПРАВЛЕНИЙ (карусель) ───────────── -->
+<section id="solutions">
+  <div class="wrap">
+    <div class="carousel-head">
+      <div class="section-head reveal" style="margin:0">
+        <p class="eyebrow">Решения</p>
+        <h2>12 направлений автоматизации</h2>
+        <p>Каждое направление — отдельный блок, закрывающий конкретный финансовый риск отрасли.</p>
+      </div>
+      <div class="carousel-controls">
+        <button class="car-btn" id="carPrev" aria-label="Назад">←</button>
+        <button class="car-btn" id="carNext" aria-label="Вперёд">→</button>
+      </div>
+    </div>
+
+    <div class="carousel" id="carousel">
+      <article class="dir-card">
+        <div class="icon">HR</div>
+        <h3>HR</h3>
+        <p>Подбор, адаптация, обучение, реестр сотрудников. Формализованная заявка и воронка на SLA.</p>
+        <div class="effect">Эффект: подбор эффективнее <b>в 3–4 раза</b></div>
+      </article>
+      <article class="dir-card">
+        <div class="icon">ОП</div>
+        <h3>Операционная деятельность</h3>
+        <p>Чек-листы, продажи, дисциплина, NPS. Контроль персонала в связке с данными iiko.</p>
+        <div class="effect">Эффект: адаптация <b>×2</b>, издержки <b>−2–4×</b></div>
+      </article>
+      <article class="dir-card">
+        <div class="icon">ФН</div>
+        <h3>Финансы</h3>
+        <p>Бюджет БДР/ДДС, оплаты, ЭДО, платёжный календарь. Запрет превышения статьи без согласования.</p>
+        <div class="effect">Эффект: бухгалтерия <b>~в 3 раза</b> легче</div>
+      </article>
+      <article class="dir-card">
+        <div class="icon">ЗК</div>
+        <h3>Закупки и склад</h3>
+        <p>Онлайн-контроль цен, остатки, ИИ-распознавание накладных, контроль списаний с причинами.</p>
+        <div class="effect">Эффект: накладные <b>сутки → 15 мин</b></div>
+      </article>
+      <article class="dir-card">
+        <div class="icon">ЮР</div>
+        <h3>Юридическое сопровождение</h3>
+        <p>Контроль сроков договоров и оплат, проверка контрагентов. Ни один срок не пропущен.</p>
+        <div class="effect">Эффект: <b>нет просрочек</b> по договорам</div>
+      </article>
+      <article class="dir-card">
+        <div class="icon">ХС</div>
+        <h3>ХАССП и СанПиН</h3>
+        <p>Медкнижки по срокам, журналы через Госключ, электронный архив. Защита от приостановки.</p>
+        <div class="effect">Эффект: нет приостановки <b>до 90 суток</b></div>
+      </article>
+      <article class="dir-card">
+        <div class="icon">КС</div>
+        <h3>Качество и сервис</h3>
+        <p>Единое озеро отзывов, перехват негатива до публикации, AI-оценка, отзыв = задача.</p>
+        <div class="effect">Эффект: негатив <b>решается до публикации</b></div>
+      </article>
+      <article class="dir-card">
+        <div class="icon">АХ</div>
+        <h3>АХО</h3>
+        <p>Заявки с чек-листом простых действий, приоритизация, объединение по направлению.</p>
+        <div class="effect">Эффект: <b>исключение ложных вызовов</b></div>
+      </article>
+      <article class="dir-card">
+        <div class="icon">БЗ</div>
+        <h3>База знаний</h3>
+        <p>Регламенты и пошаговые инструкции в Pyrus. Тиражируемая система работы, в т.ч. на франчайзи.</p>
+        <div class="effect">Эффект: <b>стандарт не теряется</b></div>
+      </article>
+      <article class="dir-card">
+        <div class="icon">ФР</div>
+        <h3>Франчайзинг</h3>
+        <p>Календарь отчётности франчайзи перед УК: бюджеты, нарушения, дисциплина, роялти.</p>
+        <div class="effect">Эффект: <b>контроль над сетью</b></div>
+      </article>
+      <article class="dir-card">
+        <div class="icon">ПМ</div>
+        <h3>Проектное управление</h3>
+        <p>Этапы, диаграмма Ганта в Pyrus, результат на каждом шаге. Запуски точно в срок.</p>
+        <div class="effect">Эффект: <b>узкие места видны заранее</b></div>
+      </article>
+      <article class="dir-card">
+        <div class="icon">КТ</div>
+        <h3>Кейтеринг</h3>
+        <p>Отраслевая адаптация: мероприятие как проект, SLA на заявку, термоконтроль перевозки.</p>
+        <div class="effect">Эффект: <b>смета за минуты</b></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────── ЭФФЕКТЫ ───────────── -->
+<section id="results" style="background: var(--bg-soft); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Эффекты</p>
+      <h2>Измеримые результаты по направлениям</h2>
+      <p>Переход из режима «анализ последствий» в режим «предотвращения последствий» подтверждается цифрами.</p>
+    </div>
+    <div class="stats reveal">
+      <div class="stat">
+        <div class="big"><b>3–4×</b></div>
+        <div class="lbl">Эффективность подбора (HR)</div>
+        <div class="src">Формализованная заявка + воронка на SLA</div>
+      </div>
+      <div class="stat">
+        <div class="big"><b>×2</b></div>
+        <div class="lbl">Скорость адаптации персонала</div>
+        <div class="src">Чек-листы, качество открытия +20–30%</div>
+      </div>
+      <div class="stat">
+        <div class="big"><b>15 мин</b></div>
+        <div class="lbl">Обработка накладной</div>
+        <div class="src">ИИ-распознавание: было ~1 сутки</div>
+      </div>
+      <div class="stat">
+        <div class="big"><b>~3×</b></div>
+        <div class="lbl">Снижение нагрузки на бухгалтерию</div>
+        <div class="src">Бюджет + платёжный календарь</div>
+      </div>
+    </div>
+    <p class="disclaimer">
+      Показатели — ориентиры из практики HORECA FAN и публичных отраслевых исследований.
+      При подготовке КП подтверждаются на данных конкретной сети. Не являются гарантией.
+    </p>
+  </div>
+</section>
+
+<!-- ───────────── CTA-БЛОК ───────────── -->
+<section class="cta-block" id="approach">
+  <div class="wrap">
+    <div class="cta-card reveal">
+      <p class="eyebrow">О подходе</p>
+      <h2>Сначала диагностика. Потом — поэтапно, по доказанному эффекту.</h2>
+      <p>Мы заходим ставками: сначала этап с быстрым измеримым возвратом, и только по доказанному результату — расширение. Риск каждого шага ограничен. Если по итогам диагностики внедрение не даст эффекта — мы честно об этом скажем ещё до начала.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary btn-lg" href="#contacts" title="⚠ плейсхолдер">Запросить демо →</a>
+        <a class="btn btn-ghost btn-lg" href="#problems">Какие проблемы решаем</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────── FOOTER ───────────── -->
+<footer class="site-footer" id="contacts">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="#">
+          <img src="assets/horeca-fan-logo-placeholder.png" alt="HORECA FAN" />
+        </a>
+        <p>Команда внедрения автоматизации для HoReCa. Превращаем процессы в измеримые и управляемые.</p>
+      </div>
+      <div class="foot-col">
+        <h4>Навигация</h4>
+        <ul>
+          <li><a href="problems.html" title="отдельная страница (IA)">Проблемы</a></li>
+          <li><a href="#approach">Подход</a></li>
+          <li><a href="#solutions">Решения</a></li>
+          <li><a href="#process">Как работаем</a></li>
+          <li><a href="#results">Эффекты</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h4>Контакты</h4>
+        <ul>
+          <li><a href="tel:+70000000000" title="⚠ плейсхолдер">+7 000 000-00-00</a></li>
+          <li><a href="mailto:hello@horeca.fan" title="⚠ плейсхолдер">hello@horeca.fan</a></li>
+          <li><a href="#" title="⚠ плейсхолдер">Telegram</a></li>
+          <li><a href="#contacts" class="btn btn-primary" style="margin-top:6px" title="⚠ плейсхолдер">Оставить заявку</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h4>Типы предприятий</h4>
+        <ul>
+          <li>Рестораны · кафе · бары</li>
+          <li>Dark Kitchen · Fast Food</li>
+          <li>Кейтеринг</li>
+          <li>Гостиничный HoReCa</li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© HORECA FAN. Все права защищены.</span>
+      <span class="warn">⚠ Контакты, форма заявки и юридические реквизиты — плейсхолдеры, уточняются заказчиком.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  /* минимальная интерактивность прототипа: transform/opacity only */
+  (function () {
+    // mobile nav
+    var burger = document.getElementById('burger');
+    var nav = document.getElementById('nav');
+    if (burger && nav) {
+      burger.addEventListener('click', function () { nav.classList.toggle('open'); });
+      nav.querySelectorAll('a').forEach(function (a) {
+        a.addEventListener('click', function () { nav.classList.remove('open'); });
+      });
+    }
+
+    // carousel controls
+    var car = document.getElementById('carousel');
+    var prev = document.getElementById('carPrev');
+    var next = document.getElementById('carNext');
+    function step() {
+      var card = car.querySelector('.dir-card');
+      return card ? card.offsetWidth + 16 : 300;
+    }
+    if (prev) prev.addEventListener('click', function () { car.scrollBy({ left: -step(), behavior: 'smooth' }); });
+    if (next) next.addEventListener('click', function () { car.scrollBy({ left: step(), behavior: 'smooth' }); });
+
+    function updateBtns() {
+      if (!prev || !next || !car) return;
+      var max = car.scrollWidth - car.clientWidth - 2;
+      prev.disabled = car.scrollLeft <= 2;
+      next.disabled = car.scrollLeft >= max;
+    }
+    if (car) { car.addEventListener('scroll', updateBtns); updateBtns(); }
+
+    // scroll-reveal
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+  })();
+</script>
+
+</body>
+</html>
